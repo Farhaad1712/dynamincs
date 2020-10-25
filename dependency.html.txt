@@ -1,0 +1,139 @@
+<HTML xmlns="http://www.w3.org/1999/xhtml">
+    <HEAD>
+        <TITLE></TITLE>
+        <META charset=utf-8></META>
+    </HEAD>
+    <style>
+        label, select {font-size: 11px;}
+    </style>
+    <BODY style="BORDER-BOTTOM: 0px; BORDER-LEFT: 0px; BORDER-TOP: 0px; BORDER-RIGHT: 0px BACKGROUND-COLOR: #ffffff; MARGIN: 0px; FONT-FAMILY: Segoe UI; FONT-SIZE: 11px;">
+
+        <div id="f1">
+            <table>
+                <tr>
+                    <td>
+                        <label for="cascade_new_teamnames">Team name</label>
+                    </td>
+                    <td>
+                        <select id="cascade_new_teamnames">
+                            <option value="null"></option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label for="cascade_new_playernames">Player Names</label>
+                    </td>
+                    <td>
+                        <select id="cascade_new_playernames">
+                            <option value="null"></option>
+                        </select>
+                    </td>
+                </tr>
+            </table>
+        </div>
+ 
+         
+        <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+        <script>
+ 
+            $(document).ready(function () {
+                
+                var options = parent.Xrm.Page.getAttribute("new_teamnames").getOptions();
+ 
+                for(i = 0; i < options.length; i++)
+                {
+                    if(options[i].value != "null"){
+ 
+                        $("#cascade_new_teamnames").append($('<option>', {
+                            value: options[i].value,
+                            text: options[i].text
+                        }));
+                    }
+                }
+                
+                //Set the cascading values to match the selected values
+                var first_selection = parent.Xrm.Page.getAttribute("new_teamnames").getValue();
+                var second_selection = parent.Xrm.Page.getAttribute("new_playernames").getValue();
+ 
+                if(first_selection == "null" || first_selection == null)
+                {
+                    $('#cascade_new_division').val("null"); 
+                }
+                else
+                {
+                    $('#cascade_new_division').val(first_selection);
+                    //call the change function on the first cascading optionset
+                    $('#cascade_new_division').change();
+                }
+ 
+                if(second_selection == "null" || second_selection == null)
+                {
+                    //disable the second optionset value
+                    $('#cascade_new_state').attr("disabled", "disabled");
+                }
+                else
+                {
+                    $('#cascade_new_state').val(second_selection);
+                }
+ 
+                //hide the crm optionsets on the crm form
+                parent.Xrm.Page.ui.controls.get("new_teamnames").setVisible(false);
+                parent.Xrm.Page.ui.controls.get("new_playernames").setVisible(false);
+ 
+            });
+ 
+            /*
+                This function will fire when the first optionset is changed. It
+                will use the json string to select the potential values for the
+                second optionset and load the values. It will also copy the
+                selected value of the first selection to the crm field and clear
+                the second crm field to ensure that the cascading logic is
+                respected.
+            */
+            $('#cascade_new_teamnames').change(function () {
+                $('#cascade_new_playernames').removeAttr("disabled");
+                $("#cascade_new_playernames option[value!='null']").remove();
+ 
+                var selected = $(this).val();
+                parent.Xrm.Page.getAttribute("new_teamnames").setValue(selected);
+                parent.Xrm.Page.getAttribute("new_playernames").setValue(null);
+ 
+                if (selected == "null" || selected == null) {
+                    $('#cascade_new_teamnames').attr("disabled", "disabled");
+                    return;
+                }
+ 
+                //json string that is used to store the cascading logic.
+                var obj = jQuery.parseJSON('{"cascade":[[100000000,[100000000,100000002,100000003,100000004]],[100000001,[100000005,100000006,100000007,100000008]],[100000002,[100000001,100000009,100000010,100000011]],[100000003,[100000012,100000013,100000014,100000015]],[100000004,[100000017,100000018,100000019,100000020]],[100000005,[100000016,100000021,100000022,100000023]]]}');
+ 
+                var possible = obj.cascade;
+                var cascadedOptions;
+                
+                for(var i = 0, l = possible.length; i < l; i++){
+                    if (possible[i][0] == selected){
+                        cascadedOptions = possible[i][1];
+                    }
+                }
+ 
+                for (var i = 0, l = cascadedOptions.length; i < l; i++) {
+                    $("#cascade_new_playernames").append($('<option>', {
+                        value: cascadedOptions[i],
+                        text: parent.Xrm.Page.getAttribute("new_playernames").getOption(cascadedOptions[i]).text
+                    }));
+                }
+ 
+            });
+ 
+            /*
+                This function will fire when the second option set is changed.
+                It will copy the value to the related crm field.
+            */
+            $('#cascade_new_playernames').change(function () {
+                var selected = $(this).val();
+                parent.Xrm.Page.getAttribute("new_playernames").setValue(selected);
+            });
+ 
+        </script>
+    </BODY>
+</HTML>
